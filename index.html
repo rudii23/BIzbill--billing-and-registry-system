@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BizBill — Billing & Registry System</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* ─── CSS Variables ─────────────────────────────────────── */
+    :root {
+      --bg:        #f7f5f0;
+      --surface:   #ffffff;
+      --border:    #e2ddd6;
+      --ink:       #1a1714;
+      --ink-muted: #7a746c;
+      --accent:    #c8401a;
+      --accent-lt: #fbeee9;
+      --green:     #1e7a4a;
+      --green-lt:  #e6f4ed;
+      --shadow:    0 2px 12px rgba(0,0,0,0.07);
+      --radius:    10px;
+      --font-display: 'DM Serif Display', serif;
+      --font-body:    'DM Sans', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ─── Sidebar ───────────────────────────────────────────── */
+    .sidebar {
+      width: 230px;
+      min-height: 100vh;
+      background: var(--ink);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-brand {
+      padding: 0 24px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-brand h1 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+    .sidebar-brand span {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      font-weight: 300;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      padding: 20px 24px 8px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 24px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      font-weight: 400;
+      transition: all 0.18s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .nav-item.active {
+      color: #fff;
+      border-left-color: var(--accent);
+      background: rgba(200,64,26,0.12);
+    }
+    .nav-icon { font-size: 16px; }
+
+    /* ─── Main Content ──────────────────────────────────────── */
+    .main {
+      margin-left: 230px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Top Bar ───────────────────────────────────────────── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0;
+      z-index: 50;
+    }
+    .topbar-title { font-family: var(--font-display); font-size: 22px; }
+    .topbar-sub { font-size: 13px; color: var(--ink-muted); margin-top: 1px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .badge-green { background: var(--green-lt); color: var(--green); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+    /* ─── Page Content ──────────────────────────────────────── */
+    .page { padding: 32px 36px; display: none; }
+    .page.active { display: block; }
+
+    /* ─── Cards / Sections ──────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .card-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-header h3 { font-family: var(--font-display); font-size: 17px; }
+    .card-header p  { font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
+    .card-body { padding: 24px; }
+
+    /* ─── Form Elements ─────────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 12px; font-weight: 600; color: var(--ink-muted); letter-spacing: 0.4px; text-transform: uppercase; }
+    input, select {
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--bg);
+      transition: border-color 0.18s, box-shadow 0.18s;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(200,64,26,0.1);
+      background: #fff;
+    }
+    input::placeholder { color: #bbb; }
+
+    /* ─── Buttons ───────────────────────────────────────────── */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #a8330f; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(200,64,26,0.3); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-muted);
+      border: 1.5px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--ink-muted); color: var(--ink); }
+    .btn-danger {
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .btn-danger:hover { background: var(--accent-lt); }
+
+    /* ─── Table ─────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #faf9f7; }
+    tbody td { padding: 13px 16px; font-size: 14px; }
+    .mono { font-family: var(--font-mono); font-size: 13px; }
+
+    /* ─── Dashboard Stats ───────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+    }
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .stat-value { font-family: var(--font-display); font-size: 36px; color: var(--ink); margin-top: 6px; }
+    .stat-sub { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
+
+    /* ─── Invoice Items ─────────────────────────────────────── */
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 120px 36px;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .remove-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-muted); font-size: 18px;
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; transition: all 0.15s;
+    }
+    .remove-btn:hover { background: var(--accent-lt); color: var(--accent); }
+    .invoice-total {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+    .invoice-total span { font-size: 13px; color: var(--ink-muted); font-weight: 500; }
+    .invoice-total strong { font-family: var(--font-display); font-size: 26px; color: var(--accent); }
+
+    /* ─── Toast Notification ────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 30px; right: 30px;
+      background: var(--ink);
+      color: #fff;
+      padding: 13px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-left: 4px solid var(--green); }
+    .toast.error   { border-left: 4px solid var(--accent); }
+
+    /* ─── Empty State ───────────────────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--ink-muted);
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+
+    /* ─── Invoice Detail Modal ──────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(26,23,20,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: 12px;
+      width: 560px;
+      max-width: 95vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      padding: 22px 26px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-family: var(--font-display); font-size: 20px; }
+    .modal-close {
+      background: none; border: none; font-size: 22px;
+      cursor: pointer; color: var(--ink-muted);
+      line-height: 1; padding: 2px;
+    }
+    .modal-body { padding: 24px 26px; }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row span:first-child { color: var(--ink-muted); }
+    .detail-row span:last-child { font-weight: 500; }
+
+    /* ─── Divider ───────────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* ─── Responsive hint ───────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main { margin-left: 0; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid.cols-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>BizBill</h1>
+      <span>Registry & Billing</span>
+    </div>
+
+    <p class="nav-label">Menu</p>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('customers')">
+      <span class="nav-icon">👤</span> Customers
+    </div>
+    <div class="nav-item" onclick="showPage('products')">
+      <span class="nav-icon">📦</span> Products
+    </div>
+    <div class="nav-item" onclick="showPage('invoices')">
+      <span class="nav-icon">🧾</span> Invoices
+    </div>
+  </aside>
+
+  <!-- ══════════════════════ MAIN ══════════════════════════ -->
+  <div class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-sub" id="page-sub">Overview of your business</div>
+      </div>
+      <div class="badge badge-green">
+        <div class="dot"></div> API Connected
+      </div>
+    </div>
+
+    <!-- ─────────── DASHBOARD PAGE ─────────── -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Customers</div>
+          <div class="stat-value" id="stat-customers">—</div>
+          <div class="stat-sub">Registered in the system</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Products</div>
+          <div class="stat-value" id="stat-products">—</div>
+          <div class="stat-sub">Products / services listed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Invoices</div>
+          <div class="stat-value" id="stat-invoices">—</div>
+          <div class="stat-sub">Bills generated so far</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Recent Invoices</h3>
+            <p>Last 5 bills created</p>
+          </div>
+          <button class="btn btn-ghost" onclick="showPage('invoices')">View All →</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice ID</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody id="recent-invoices-body">
+                <tr><td colspan="4"><div class="empty"><div class="empty-icon">🧾</div><p>No invoices yet</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────── CUSTOMERS PAGE ─────────── -->
+    <div class="page" id="page-customers">
+
+      <!-- Add Customer Form -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Add New Customer</h3>
+            <p>Fill in the details to register a customer</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="cust-name" placeholder="e.g. Rahul Sharma"/>
+            </div>
+            <div class="form-group">
+              <label>Phone Number *</label>
+              <input type="text" id="cust-phone" placeholder="e.g. 9876543210"/>
+            </div>
+            <div class="form-group full">
+              <label>Email Address (optional)</label>
+              <input type="email" id="cust-email" placeholder="e.g. rahul@example.com"/>
+            </div>
+          </div>
+          <div style="margin-top:20px">
+            <button class="btn btn-primary" onclick="addCustomer()">＋ Add Customer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer List -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>All Customers</h3>
+            <p>Tap the row to view, or delete a customer</p>
+          </div>
+          <button class="btn btn-ghost" onclick="loadCustomers()">↻ Refresh</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Email</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="customers-body">
+                <tr><td colspan="5"><div class="empty"><div class="empty-icon">👤</div><p>No customers found</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────── PRODUCTS PAGE ─────────── -->
+    <div class="page" id="page-products">
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Add New Product</h3>
+            <p>Register a product or service with its price</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Product / Service Name *</label>
+              <input type="text" id="prod-name" placeholder="e.g. Web Design Package"/>
+            </div>
+            <div class="form-group">
+              <label>Price (₹) *</label>
+              <input type="number" id="prod-price" placeholder="e.g. 4999" min="0" step="0.01"/>
+            </div>
+          </div>
+          <div style="margin-top:20px">
+            <button class="btn btn-primary" onclick="addProduct()">＋ Add Product</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>All Products</h3>
+            <p>Products and services available for billing</p>
+          </div>
+          <button class="btn btn-ghost" onclick="loadProducts()">↻ Refresh</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Price (₹)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="products-body">
+                <tr><td colspan="4"><div class="empty"><div class="empty-icon">📦</div><p>No products found</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────── INVOICES PAGE ─────────── -->
+    <div class="page" id="page-invoices">
+
+      <!-- Create Invoice -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Create New Invoice</h3>
+            <p>Select customer, add products, and generate bill</p>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- Step 1: Select Customer -->
+          <div style="margin-bottom:20px">
+            <label style="display:block;margin-bottom:6px">Step 1 — Select Customer *</label>
+            <select id="inv-customer" style="max-width:320px">
+              <option value="">— Choose a customer —</option>
+            </select>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Step 2: Add Products -->
+          <div style="margin-bottom:14px">
+            <label>Step 2 — Add Products</label>
+          </div>
+          <div id="invoice-items">
+            <!-- Item rows injected here -->
+          </div>
+          <button class="btn btn-ghost" onclick="addInvoiceItem()" style="margin-top:8px">
+            ＋ Add Product Row
+          </button>
+
+          <!-- Total -->
+          <div class="invoice-total">
+            <span>Total Amount</span>
+            <strong id="invoice-total-display">₹0.00</strong>
+          </div>
+
+          <div style="margin-top:20px">
+            <button class="btn btn-primary" onclick="createInvoice()">🧾 Generate Invoice</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice List -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>All Invoices</h3>
+            <p>Click "View" to see full invoice details</p>
+          </div>
+          <button class="btn btn-ghost" onclick="loadInvoices()">↻ Refresh</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice ID</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th>Total (₹)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="invoices-body">
+                <tr><td colspan="5"><div class="empty"><div class="empty-icon">🧾</div><p>No invoices yet</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- ══════════════════ INVOICE DETAIL MODAL ══════════════════ -->
+  <div class="modal-overlay" id="invoice-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-title">Invoice Details</h3>
+          <p style="font-size:13px;color:var(--ink-muted);margin-top:3px" id="modal-date"></p>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ TOAST ══════════════════════════════════ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ══════════════════════ JAVASCRIPT ════════════════════════ -->
+  <script>
+    /* ──────────────────────────────────────────────────────────
+       CONFIGURATION
+       Change BASE_URL if your Flask server runs on a different port.
+    ────────────────────────────────────────────────────────── */
+    const BASE_URL = window.location.protocol === 'file:'
+      ? 'http://127.0.0.1:5000'
+      : '';
+
+    /* ──────── In-memory cache for customer/product names ──── */
+    let customersCache = [];
+    let productsCache  = [];
+
+    /* ═══════════════════════════════════════════════════════
+       NAVIGATION
+    ═══════════════════════════════════════════════════════ */
+    const pageMeta = {
+      dashboard : { title: 'Dashboard',    sub: 'Overview of your business' },
+      customers : { title: 'Customers',    sub: 'Manage customer registry'  },
+      products  : { title: 'Products',     sub: 'Manage product catalogue'  },
+      invoices  : { title: 'Invoices',     sub: 'Create and view invoices'  },
+    };
+
+    function showPage(name) {
+      // Update sidebar highlight
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => {
+        if (el.textContent.trim().toLowerCase().includes(name)) el.classList.add('active');
+      });
+      // Show page
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      // Update topbar
+      document.getElementById('page-title').textContent = pageMeta[name].title;
+      document.getElementById('page-sub').textContent   = pageMeta[name].sub;
+      // Load data
+      if (name === 'dashboard') loadDashboard();
+      if (name === 'customers') loadCustomers();
+      if (name === 'products')  loadProducts();
+      if (name === 'invoices')  { loadInvoices(); loadDropdowns(); initInvoiceItems(); }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       TOAST
+    ═══════════════════════════════════════════════════════ */
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       API HELPERS
+    ═══════════════════════════════════════════════════════ */
+    async function apiGet(path) {
+      try {
+        const r = await fetch(BASE_URL + path);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return await r.json();
+      } catch (e) {
+        showToast('Cannot reach API. Is Flask running?', 'error');
+        return null;
+      }
+    }
+
+    async function apiPost(path, body) {
+      try {
+        const r = await fetch(BASE_URL + path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+        return data;
+      } catch (e) {
+        showToast(e.message || 'API error. Check Flask console.', 'error');
+        return null;
+      }
+    }
+
+    function getCreatedEntity(res, key) {
+      if (!res) return null;
+      return res[key] || res;
+    }
+
+    async function apiDelete(path) {
+      try {
+        const r = await fetch(BASE_URL + path, { method: 'DELETE' });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+        return data;
+      } catch (e) {
+        showToast(e.message || 'Delete failed.', 'error');
+        return null;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       DASHBOARD
+    ═══════════════════════════════════════════════════════ */
+    async function loadDashboard() {
+      const [custs, prods, invs] = await Promise.all([
+        apiGet('/customers'), apiGet('/products'), apiGet('/invoices')
+      ]);
+      document.getElementById('stat-customers').textContent = custs ? custs.length : '—';
+      document.getElementById('stat-products').textContent  = prods ? prods.length : '—';
+      document.getElementById('stat-invoices').textContent  = invs  ? invs.length  : '—';
+
+      // Recent invoices (last 5)
+      const tbody = document.getElementById('recent-invoices-body');
+      if (!invs || invs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="empty-icon">🧾</div><p>No invoices yet</p></div></td></tr>`;
+        return;
+      }
+      const recent = [...invs].reverse().slice(0, 5);
+      tbody.innerHTML = recent.map(inv => `
+        <tr>
+          <td class="mono">#${String(inv.id).padStart(4,'0')}</td>
+          <td>${getCustomerName(inv.customer_id, custs)}</td>
+          <td>${inv.date || '—'}</td>
+          <td class="mono">₹${parseFloat(inv.total_amount).toFixed(2)}</td>
+        </tr>`).join('');
+    }
+
+    function getCustomerName(id, list) {
+      const c = (list || customersCache).find(c => c.id === id);
+      return c ? c.name : `#${id}`;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       CUSTOMERS
+    ═══════════════════════════════════════════════════════ */
+    async function loadCustomers() {
+      const data = await apiGet('/customers');
+      if (!data) return;
+      customersCache = data;
+      const tbody = document.getElementById('customers-body');
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">👤</div><p>No customers registered yet</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map(c => `
+        <tr>
+          <td class="mono">${c.id}</td>
+          <td><strong>${c.name}</strong></td>
+          <td>${c.phone}</td>
+          <td>${c.email || '<span style="color:var(--ink-muted)">—</span>'}</td>
+          <td>
+            <button class="btn btn-danger" onclick="deleteCustomer(${c.id})">✕ Delete</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function addCustomer() {
+      const name  = document.getElementById('cust-name').value.trim();
+      const phone = document.getElementById('cust-phone').value.trim();
+      const email = document.getElementById('cust-email').value.trim();
+      if (!name || !phone) { showToast('Name and phone are required.', 'error'); return; }
+
+      const customer = getCreatedEntity(await apiPost('/customers', { name, phone, email }), 'customer');
+      if (customer && customer.id) {
+        showToast(`Customer "${name}" added!`);
+        document.getElementById('cust-name').value  = '';
+        document.getElementById('cust-phone').value = '';
+        document.getElementById('cust-email').value = '';
+        loadCustomers();
+      }
+    }
+
+    async function deleteCustomer(id) {
+      if (!confirm('Delete this customer?')) return;
+      await apiDelete(`/customers/${id}`);
+      showToast('Customer deleted.');
+      loadCustomers();
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PRODUCTS
+    ═══════════════════════════════════════════════════════ */
+    async function loadProducts() {
+      const data = await apiGet('/products');
+      if (!data) return;
+      productsCache = data;
+      const tbody = document.getElementById('products-body');
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="empty-icon">📦</div><p>No products added yet</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map(p => `
+        <tr>
+          <td class="mono">${p.id}</td>
+          <td><strong>${p.name}</strong></td>
+          <td class="mono">₹${parseFloat(p.price).toFixed(2)}</td>
+          <td>
+            <button class="btn btn-danger" onclick="deleteProduct(${p.id})">✕ Delete</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function addProduct() {
+      const name  = document.getElementById('prod-name').value.trim();
+      const price = parseFloat(document.getElementById('prod-price').value);
+      if (!name || isNaN(price) || price < 0) { showToast('Valid name and price required.', 'error'); return; }
+
+      const product = getCreatedEntity(await apiPost('/products', { name, price }), 'product');
+      if (product && product.id) {
+        showToast(`Product "${name}" added!`);
+        document.getElementById('prod-name').value  = '';
+        document.getElementById('prod-price').value = '';
+        loadProducts();
+      }
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm('Delete this product?')) return;
+      await apiDelete(`/products/${id}`);
+      showToast('Product deleted.');
+      loadProducts();
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       INVOICES
+    ═══════════════════════════════════════════════════════ */
+
+    // Populate customer dropdown and refresh product cache
+    async function loadDropdowns() {
+      const [custs, prods] = await Promise.all([apiGet('/customers'), apiGet('/products')]);
+      if (custs) {
+        customersCache = custs;
+        const sel = document.getElementById('inv-customer');
+        sel.innerHTML = '<option value="">— Choose a customer —</option>';
+        custs.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name} (${c.phone})</option>`);
+      }
+      if (prods) productsCache = prods;
+      refreshItemDropdowns();
+    }
+
+    // ── Invoice Item Rows ──
+    let itemCount = 0;
+
+    function initInvoiceItems() {
+      document.getElementById('invoice-items').innerHTML = '';
+      itemCount = 0;
+      addInvoiceItem();
+    }
+
+    function addInvoiceItem() {
+      itemCount++;
+      const id  = 'item-' + itemCount;
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.id = id;
+
+      const opts = productsCache.map(p =>
+        `<option value="${p.id}" data-price="${p.price}">${p.name} — ₹${parseFloat(p.price).toFixed(2)}</option>`
+      ).join('');
+
+      row.innerHTML = `
+        <select class="item-product" onchange="calcTotal()">
+          <option value="">— Select product —</option>
+          ${opts}
+        </select>
+        <input type="number" class="item-qty" placeholder="Qty" min="1" value="1" oninput="calcTotal()"/>
+        <input type="text" class="item-subtotal mono" placeholder="₹0.00" readonly style="background:#f5f3ef;cursor:default"/>
+        <button class="remove-btn" onclick="removeItem('${id}')">✕</button>`;
+      document.getElementById('invoice-items').appendChild(row);
+      calcTotal();
+    }
+
+    function refreshItemDropdowns() {
+      document.querySelectorAll('.item-product').forEach(sel => {
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">— Select product —</option>';
+        productsCache.forEach(p => {
+          sel.innerHTML += `<option value="${p.id}" data-price="${p.price}" ${p.id == cur ? 'selected' : ''}>${p.name} — ₹${parseFloat(p.price).toFixed(2)}</option>`;
+        });
+      });
+      calcTotal();
+    }
+
+    function removeItem(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+      calcTotal();
+    }
+
+    function calcTotal() {
+      let total = 0;
+      document.querySelectorAll('.item-row').forEach(row => {
+        const sel = row.querySelector('.item-product');
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const opt = sel.options[sel.selectedIndex];
+        const price = opt ? parseFloat(opt.dataset.price) || 0 : 0;
+        const sub = price * qty;
+        row.querySelector('.item-subtotal').value = sub > 0 ? `₹${sub.toFixed(2)}` : '';
+        total += sub;
+      });
+      document.getElementById('invoice-total-display').textContent = `₹${total.toFixed(2)}`;
+    }
+
+    async function createInvoice() {
+      const customerId = document.getElementById('inv-customer').value;
+      if (!customerId) { showToast('Please select a customer.', 'error'); return; }
+
+      const items = [];
+      let valid = true;
+      document.querySelectorAll('.item-row').forEach(row => {
+        const sel      = row.querySelector('.item-product');
+        const qty      = parseInt(row.querySelector('.item-qty').value);
+        const prodId   = sel.value;
+        const opt      = sel.options[sel.selectedIndex];
+        const price    = opt ? parseFloat(opt.dataset.price) : 0;
+        if (prodId && qty > 0) {
+          items.push({ product_id: parseInt(prodId), quantity: qty, price_at_purchase: price });
+        }
+      });
+
+      if (items.length === 0) { showToast('Add at least one product.', 'error'); return; }
+
+      const payload = { customer_id: parseInt(customerId), items };
+      const invoice = getCreatedEntity(await apiPost('/invoices', payload), 'invoice');
+
+      if (invoice && invoice.id) {
+        showToast(`Invoice #${String(invoice.id).padStart(4,'0')} created!`);
+        initInvoiceItems();
+        document.getElementById('inv-customer').value = '';
+        document.getElementById('invoice-total-display').textContent = '₹0.00';
+        loadInvoices();
+      }
+    }
+
+    async function loadInvoices() {
+      const [data, custs] = await Promise.all([apiGet('/invoices'), apiGet('/customers')]);
+      if (!data) return;
+      if (custs) customersCache = custs;
+
+      const tbody = document.getElementById('invoices-body');
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">🧾</div><p>No invoices generated yet</p></div></td></tr>`;
+        return;
+      }
+      const sorted = [...data].reverse();
+      tbody.innerHTML = sorted.map(inv => `
+        <tr>
+          <td class="mono">#${String(inv.id).padStart(4,'0')}</td>
+          <td>${getCustomerName(inv.customer_id, custs)}</td>
+          <td>${inv.date || '—'}</td>
+          <td class="mono"><strong>₹${parseFloat(inv.total_amount).toFixed(2)}</strong></td>
+          <td>
+            <button class="btn btn-ghost" style="padding:6px 14px;font-size:12px" onclick="viewInvoice(${inv.id})">View →</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function viewInvoice(id) {
+      const inv = await apiGet(`/invoices/${id}`);
+      if (!inv) return;
+
+      document.getElementById('modal-title').textContent = `Invoice #${String(inv.id).padStart(4,'0')}`;
+      document.getElementById('modal-date').textContent  = `Date: ${inv.date || '—'}`;
+
+      const custName = getCustomerName(inv.customer_id);
+      let html = `
+        <div class="detail-row"><span>Customer</span><span>${custName}</span></div>
+        <div class="detail-row"><span>Invoice ID</span><span class="mono">#${String(inv.id).padStart(4,'0')}</span></div>
+        <div class="divider"></div>
+        <p style="font-size:12px;font-weight:600;color:var(--ink-muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Items</p>`;
+
+      if (inv.items && inv.items.length > 0) {
+        inv.items.forEach(item => {
+          const pName = productsCache.find(p => p.id === item.product_id)?.name || `Product #${item.product_id}`;
+          html += `
+            <div class="detail-row">
+              <span>${pName} × ${item.quantity}</span>
+              <span class="mono">₹${(item.price_at_purchase * item.quantity).toFixed(2)}</span>
+            </div>`;
+        });
+      } else {
+        html += `<p style="color:var(--ink-muted);font-size:14px">No items found.</p>`;
+      }
+
+      html += `
+        <div class="divider"></div>
+        <div class="detail-row">
+          <span style="font-weight:700">Total Amount</span>
+          <span style="font-family:var(--font-display);font-size:22px;color:var(--accent)">₹${parseFloat(inv.total_amount).toFixed(2)}</span>
+        </div>`;
+
+      document.getElementById('modal-body').innerHTML = html;
+      document.getElementById('invoice-modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('invoice-modal').classList.remove('open');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('invoice-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    /* ═══════════════════════════════════════════════════════
+       INIT — load dashboard on page load
+    ═══════════════════════════════════════════════════════ */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDashboard();
+    });
+  </script>
+</body>
+</html>
